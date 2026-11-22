@@ -1,48 +1,20 @@
-\# Pharma QA \& Regulatory Compliance Assistant (Hybrid RAG + Text-to-SQL)
+# Pharma QA & Regulatory Compliance Assistant
 
+A ChatGPT-style AI assistant built for pharmaceutical Quality Assurance (QA) and Quality Control (QC) teams. It helps quality engineers instantly look up manufacturing rules from Standard Operating Procedures (SOPs), check live batch testing results in plain English, and download audit checklists as PDFs—without making up answers.
 
+## What Problem Does This Solve?
+In medicine manufacturing, QA teams spend hours manually cross-checking thick PDF rulebooks (SOPs) against factory batch testing databases before approving a medicine batch for release. 
 
-An enterprise AI compliance assistant built for pharmaceutical Quality Assurance (QA) and Quality Control (QC) teams. It combines \*\*Hybrid Retrieval-Augmented Generation (Vector + BM25 + Cross-Encoder Reranking)\*\*, a \*\*Read-Only Text-to-SQL Engine\*\*, and \*\*Automated Audit Report Generation\*\* behind a role-based FastAPI backend and a clean ChatGPT-style Streamlit interface.
+Standard AI chatbots often guess numbers or cannot connect to live company databases. This assistant solves both problems by:
+1. **Answering SOP questions with exact PDF page numbers** so every rule can be verified in seconds.
+2. **Checking live batch test records in plain English** (no SQL knowledge required).
+3. **Generating downloadable PDF audit checklists** combining SOP rules and flagged batches.
 
-
-
-\---
-
-
-
-\## Problem Statement
-
-In pharmaceutical manufacturing, QA engineers regularly cross-check Standard Operating Procedures (SOPs) against live batch testing records during batch release audits and deviation investigations. Standard LLM chatbots often hallucinate regulatory thresholds or cannot query structured batch databases. This system solves both by routing every query to the right specialized tool and enforcing strict document-page citations.
-
-
-
-\---
-
-
-
-\## System Architecture
-
-
-
-```text
-
-User (Streamlit Chat UI)
-
-&#x20;       │  JWT Bearer Token (QA\_Admin / QC\_Analyst)
-
-&#x20;       ▼
-
-FastAPI Backend (/login, /ask, /upload-sop, /audit-logs)
-
-&#x20;       │
-
-&#x20;       ▼
-
-Traffic Cop Intent Router (Gemini API with Timeout \& Auto-Fallback)
-
-&#x20;  ├──► \[RAG Engine]    ChromaDB + BM25 (RRF) ──► Cross-Encoder Reranker ──► Cited SOP Answer
-
-&#x20;  ├──► \[SQL Engine]    Natural Language ──► Read-Only SELECT Guardrail ──► SQLite (pharma.db)
-
-&#x20;  └──► \[Report Engine] SOP Rules + Non-Released Batches ──► Structured QA Checklist + PDF Export
-
+## How It Works (Simple Flow)
+User asks a question in the Chat UI
+               │
+               ▼
+   Smart Router ("Traffic Cop")
+   ├──► Policy / Rule Question  ──► Searches SOP PDFs & replies with exact [File | Page] citations
+   ├──► Batch / Lab Data Query  ──► Safely reads the SQLite batch database & shows results
+   └──► Audit / Checklist Task  ──► Combines SOP rules + failed batches & creates a PDF report
