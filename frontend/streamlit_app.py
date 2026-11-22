@@ -225,5 +225,63 @@ def render_assistant_extras(data: dict, key_suffix: str):
                 for c in data["citations"]:
                     st.markdown(f"- **{c['source']}** (Page {c['page']}) — _{c['snippet']}_")
 
+for idx, msg in enumerate(st.session_state.messages):
+    avatar = "🧑" if msg["role"] == "user" else "💊"
+    with st.chat_message(msg["role"], avatar=avatar):
+        if msg["role"] == "assistant":
+            route_labels = {
+                "RAG": "SOP Knowledge Base",
+                "SQL": "Batch QC Database",
+                "REPORT": "Compliance Report Generator"
+            }
+            label = route_labels.get(msg.get("route", "RAG"), "AI Assistant")
+            st.markdown(f"<span class='route-pill'>✦ {label}</span>", unsafe_allow_html=True)
+        st.markdown(msg["content"])
+        if msg["role"] == "assistant":
+            render_assistant_extras(msg, key_suffix=str(idx))
 
-for idx, msg in enumerate(st.session_state.
+
+# --- CHAT INPUT ---
+user_input = st.chat_input("Message Pharma QA Assistant...")
+active_query = selected_prompt or user_input
+
+if active_query:
+    st.session_state.messages.append({"role": "user", "content": active_query})
+    with st.chat_message("user", avatar="🧑"):
+        st.markdown(active_query)
+
+    with st.chat_message("assistant", avatar="💊"):
+        with st.spinner("Thinking..."):
+            try:
+                resp = requests.post(
+                    f"{API_URL}/ask",
+                    headers=auth_headers(),
+                    json={"question": active_query},
+                    timeout=45
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    route_labels = {
+                        "RAG": "SOP Knowledge Base",
+                        "SQL": "Batch QC Database",
+                        "REPORT": "Compliance Report Generator"
+                    }
+                    label = route_labels.get(data.get("route", "RAG"), "AI Assistant")
+                    st.markdown(f"<span class='route-pill'>✦ {label}</span>", unsafe_allow_html=True)
+                    st.markdown(data["answer"])
+                    render_assistant_extras(data, key_suffix="live")
+
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": data["answer"],
+                        "route": data["route"],
+                        "sql_used": data.get("sql_used"),
+                        "citations": data.get("citations", []),
+                        "report_file": data.get("report_file")
+                    })
+                    if selected_prompt:
+                        st.rerun()
+                else:
+                    st.error(resp.json().get("detail", "Error processing request."))
+            except Exception as e:
+                st.error(f"Could not connect to backend: {e}")
