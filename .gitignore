@@ -1,0 +1,8 @@
+venv/
+__pycache__/
+*.pyc
+.env
+data/audit_logs.jsonl
+data/reports/*.pdf
+data/chroma_db/
+data/bm25_index.pkl

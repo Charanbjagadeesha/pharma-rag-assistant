@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+sqlalchemy
+chromadb
+sentence-transformers
+rank-bm25
+pypdf
+python-docx
+openpyxl
+reportlab
+google-genai
+python-dotenv
+PyJWT
+passlib[bcrypt]
+python-multipart
+streamlit
+requests
